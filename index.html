@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Musik Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #8ACE00;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .hidden {
+            display: none;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #8ACE00;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #8ACE00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="start-page">
+        <h1>Välkommen till musikåret 2024!</h1>
+        <p>Skriv in ditt namn!</p>
+        <input type="text" id="username" placeholder="Your name" />
+        <button onclick="startQuiz()">Nästa</button>
+    </div>
+
+    <div class="container hidden" id="quiz-page">
+        <h2>Fråga <span id="question-number">1</span></h2>
+        <div id="spotify-player"></div>
+        <form id="quiz-form"></form>
+        <button onclick="previousQuestion()">Tillbaka</button>
+        <button onclick="nextQuestion()">Nästa</button>
+    </div>
+
+    <div class="container hidden" id="edit-page">
+        <h2>Se över dina svar</h2>
+        <div id="review-answers"></div>
+        <button onclick="previousEdit()">Tillbaka</button>
+        <button onclick="submitAnswers()">Lås in mina svar!</button>
+    </div>
+
+    <div class="container hidden" id="scoreboard-page">
+        <h1>Resultat</h1>
+        <p>Bra jobbat, <span id="display-username"></span>!</p>
+        <p>Ditt resultat är: <span id="final-score"></span></p>
+        <div id="correct-answers">
+            <h3>Rätta svar:</h3>
+            <ul id="correct-answers-list"></ul>
+        </div>
+    </div>
+
+<script>
+// Global variables
+let currentQuestion = 0;
+const userAnswers = [];
+const selectionCounts = {};
+
+// Questions data
+const questions = [
+    {
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/4w2GLmK2wnioVnb5CPQeex?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>',
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Ellen'
+    },
+    { 
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/6ocbgoVGwYJhOv1GgI9NsF?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Fredrik' 
+    },
+    {  
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/2kLWSmKHhfUBepkIA9oNe5?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Sara' 
+    },
+    {
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/4wJ5Qq0jBN4ajy7ouZIV1c?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Sara' 
+    },
+    { 
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/5z9dTDLkQpZafE8AkDpOfc?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Amelia' 
+    },
+    {
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/3xkHsmpQCBMytMJNiDf3Ii?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Malin' 
+    },
+    { 
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/5rvQNMTYBMarC8ed6KUPvg?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Lewis' 
+    },
+    {
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/09keT5ocFhEd5W5HidiUNq?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Sara' 
+    },
+    { 
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/2tpWsVSb9UEmDRxAl1zhX1?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Fredrik' 
+    },
+    { 
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/4u4zx9ERn7iIeTskOCGKXI?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Malin' 
+    },
+    { 
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/1yU51sZHtxvZHlni32lgxM?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Amelia' 
+    },
+    { 
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/5hVghJ4KaYES3BFUATCYn0?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Lewis' 
+    },
+    { 
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/2HRqTpkrJO5ggZyyK6NPWz?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Fredrik' 
+    },
+    { 
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/1C8XUj2ZHSUeeAc93r6gb9?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Ellen' 
+    },
+    { 
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/0i8JFpqe9cKwnrcvoNgl1L?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Malin' 
+    },
+    { 
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/5B8VpcIC3EAI3wke3XQoRy?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Oliver W' 
+    },
+    { 
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/0WbMK4wrZ1wFSty9F7FCgu?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Ellen' 
+    },
+    { 
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/6AtZLIzUINvExIUy4QhdjP?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Fredrik' 
+    },
+    { 
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/7rMAh5pNlYmkNGn1kTByol?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Amelia' 
+    },
+    { 
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/4xhsWYTOGcal8zt0J161CU?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Ellen' 
+    },
+    { 
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/1xON0KRVoyLv2lHy4D98Og?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Oliver W' 
+    },
+    { 
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/0ct6r3EGTcMLPtrXHDvVjc?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Malin' 
+    },
+    { 
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/47N81NMkB488fuOwOC3Oip?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Sara' 
+    },
+    {
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/3fxWcOWUQxapuKin9NhCcf?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Sara' 
+    },
+    {
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/6nA43LwkBmljzdIs1GKZ8x?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Oliver W' 
+    },
+    {
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/3di5hcvxxciiqwMH1jarhY?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Fredrik' 
+    },
+    {
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/0MUSTQOVQGWRWfAo068NpV?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Amelia' 
+    },
+    {
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/0cGG2EouYCEEC3xfa0tDFV?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Lewis' 
+    },
+    { 
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/3tTDOodJcr6vKF2DASlwMZ?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Lewis' 
+    },
+    {
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/32CfSQ8BrKrz4H56GFtoWl?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Amelia' 
+    },
+    {
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/2mAznWMYehmj1bfiqvHHsK?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Malin' 
+    },
+    {
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/2n6diDbOJs2UGMYY4qKwV2?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Oliver W' 
+    },
+    {
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/2bNKxT4IKG9g1ucZvUKNCC?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Oliver W' 
+    },
+    {
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/4JHg4nNYUJQ5HULcCmI18R?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Lewis' 
+    },
+    {
+
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/7gaA3wERFkFkgivjwbSvkG?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Ellen' 
+    },
+    { 
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/6bTM9i2Vn8cUhAH7xjosvt?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Option 2' 
+    },
+    { 
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/6bTM9i2Vn8cUhAH7xjosvt?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Option 2' 
+    },
+    { 
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/6bTM9i2Vn8cUhAH7xjosvt?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Option 2' 
+    },
+    { 
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/6bTM9i2Vn8cUhAH7xjosvt?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Option 2' 
+    },
+    { 
+        iframe: '<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/6bTM9i2Vn8cUhAH7xjosvt?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>', 
+        options: ['Amelia', 'Ellen', 'Fredrik', 'Lewis', 'Malin', 'Oliver S', 'Oliver W', 'Sara'],
+        correct: 'Option 2' 
+    }
+];
+
+// Initialize selection counts for each option
+questions.forEach(question => {
+    question.options.forEach(option => {
+        if (!selectionCounts[option]) {
+            selectionCounts[option] = 0;
+        }
+    });
+});
+
+// Start quiz
+function startQuiz() {
+    const username = document.getElementById('username').value;
+    if (!username) {
+        alert('Skriv ditt namn!');
+        return;
+    }
+    document.getElementById('start-page').classList.add('hidden');
+    document.getElementById('quiz-page').classList.remove('hidden');
+    loadQuestion();
+}
+
+// Load the current question
+function loadQuestion() {
+    const question = questions[currentQuestion];
+    document.getElementById('question-number').textContent = currentQuestion + 1;
+
+    // Replace Spotify player
+    const spotifyPlayer = document.getElementById('spotify-player');
+    spotifyPlayer.innerHTML = question.iframe;
+
+    // Load options and display the selection count
+    const form = document.getElementById('quiz-form');
+    form.innerHTML = '';
+    question.options.forEach(option => {
+        const countText = `(selected ${selectionCounts[option]} time(s))`; // Display selection count
+        const label = document.createElement('label');
+        label.innerHTML = `
+            <input type="radio" name="answer" value="${option}">
+            ${option} <span class="selection-count">${countText}</span>
+        `;
+        form.appendChild(label);
+        form.appendChild(document.createElement('br'));
+    });
+
+    // Show/Hide previous button based on current question
+    if (currentQuestion === 0) {
+        document.querySelector("button[onclick='previousQuestion()']").classList.add('hidden');
+    } else {
+        document.querySelector("button[onclick='previousQuestion()']").classList.remove('hidden');
+    }
+}
+
+// Move to the next question
+function nextQuestion() {
+    const selected = document.querySelector('input[name="answer"]:checked');
+    if (!selected) {
+        alert('Välj ett alternativ!');
+        return;
+    }
+    const selectedValue = selected.value;
+
+    // Update selection count for the selected option
+    selectionCounts[selectedValue]++;
+    userAnswers[currentQuestion] = selectedValue;
+
+    // Stop current Spotify playback
+    const spotifyPlayer = document.getElementById('spotify-player');
+    spotifyPlayer.innerHTML = '';
+
+    currentQuestion++;
+
+    if (currentQuestion < questions.length) {
+        loadQuestion();
+    } else {
+        document.getElementById('quiz-page').classList.add('hidden');
+        document.getElementById('edit-page').classList.remove('hidden');
+        displayReview();
+    }
+}
+
+// Move to the previous question
+function previousQuestion() {
+    if (currentQuestion > 0) {
+        // Stop current Spotify playback
+        const spotifyPlayer = document.getElementById('spotify-player');
+        spotifyPlayer.innerHTML = '';
+
+        currentQuestion--;
+        loadQuestion();
+    }
+}
+
+// Review answers page
+function displayReview() {
+    const reviewDiv = document.getElementById('review-answers');
+    reviewDiv.innerHTML = '';
+    questions.forEach((question, index) => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <p>Fråga ${index + 1}: </p>
+            ${question.options.map(option => `
+                <label>
+                    <input type="radio" name="review-answer-${index}" value="${option}" ${userAnswers[index] === option ? 'checked' : ''}>
+                    ${option}
+                </label>
+                <br>
+            `).join('')}
+        `;
+        reviewDiv.appendChild(div);
+    });
+}
+
+// Navigate back to quiz page for editing answers
+function previousEdit() {
+    document.getElementById('edit-page').classList.add('hidden');
+    document.getElementById('quiz-page').classList.remove('hidden');
+    loadQuestion();
+}
+
+// Submit answers and show final result
+function submitAnswers() {
+    questions.forEach((_, index) => {
+        const selected = document.querySelector(`input[name="review-answer-${index}"]:checked`);
+        userAnswers[index] = selected ? selected.value : userAnswers[index];
+    });
+    document.getElementById('edit-page').classList.add('hidden');
+    document.getElementById('scoreboard-page').classList.remove('hidden');
+    document.getElementById('display-username').textContent = document.getElementById('username').value;
+    document.getElementById('final-score').textContent = userAnswers.filter((answer, index) => answer === questions[index].correct).length;
+
+    const correctAnswersList = document.getElementById('correct-answers-list');
+    correctAnswersList.innerHTML = '';
+    questions.forEach((question, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `Question ${index + 1}: <button onclick="showCorrectAnswer(${index})">Show</button><span id="correct-answer-${index}" class="hidden"> - ${question.correct}</span>`;
+        correctAnswersList.appendChild(li);
+    });
+}
+
+// Show the correct answer for each question
+function showCorrectAnswer(index) {
+    document.getElementById(`correct-answer-${index}`).classList.remove('hidden');
+}
+
+</script>
+</body>
+</html>
