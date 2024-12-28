@@ -445,7 +445,7 @@ function submitAnswers() {
     correctAnswersList.innerHTML = '';
     questions.forEach((question, index) => {
         const li = document.createElement('li');
-        li.innerHTML = `Question ${index + 1}: <button onclick="showCorrectAnswer(${index})">Show</button><span id="correct-answer-${index}" class="hidden"> - ${question.correct}</span>`;
+        li.innerHTML = `Fråga ${index + 1}: <button onclick="showCorrectAnswer(${index})">Show</button><span id="correct-answer-${index}" class="hidden"> - ${question.correct}</span>`;
         correctAnswersList.appendChild(li);
     });
 }
