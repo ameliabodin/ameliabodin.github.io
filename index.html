@@ -345,7 +345,7 @@ function loadQuestion() {
     const form = document.getElementById('quiz-form');
     form.innerHTML = '';
     question.options.forEach(option => {
-        const countText = `(selected ${selectionCounts[option]} time(s))`; // Display selection count
+        const countText = `(vald ${selectionCounts[option]} gång(er))`; // Display selection count
         const label = document.createElement('label');
         label.innerHTML = `
             <input type="radio" name="answer" value="${option}">
